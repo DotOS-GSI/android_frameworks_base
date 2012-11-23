@@ -158,7 +158,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
     // Battery stats.
     private final IBatteryStats mBatteryStats;
 
-    // The lights service.
+    // The lights manager.
     private final LightsManager mLights;
 
     // The sensor manager.
@@ -912,18 +912,12 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
         if (state == Display.STATE_OFF) {
             brightnessState = PowerManager.BRIGHTNESS_OFF_FLOAT;
             mBrightnessReasonTemp.setReason(BrightnessReason.REASON_SCREEN_OFF);
-            LogicalLight buttonsLight = mLights.getLight(LightsManager.LIGHT_ID_BUTTONS);
-            if (buttonsLight != null) {
-                buttonsLight.setBrightness(brightnessState);
-            }
+            mLights.getLight(LightsManager.LIGHT_ID_BUTTONS).setBrightness(brightnessState);
         }
 
         // Disable button lights when dozing
         if (state == Display.STATE_DOZE || state == Display.STATE_DOZE_SUSPEND) {
-            LogicalLight buttonsLight = mLights.getLight(LightsManager.LIGHT_ID_BUTTONS);
-            if (buttonsLight != null) {
-                buttonsLight.setBrightness(PowerManager.BRIGHTNESS_OFF_FLOAT);
-            }
+            mLights.getLight(LightsManager.LIGHT_ID_BUTTONS).setBrightness(PowerManager.BRIGHTNESS_OFF_FLOAT);
         }
 
         // Always use the VR brightness when in the VR state.
