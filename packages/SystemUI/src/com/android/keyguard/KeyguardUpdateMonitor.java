@@ -1343,7 +1343,10 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
 
         @Override
         public void onAuthenticationError(int errMsgId, CharSequence errString) {
-            handleFingerprintError(errMsgId, errString != null ? errString.toString() : "");
+            if(errString != null)
+                 handleFingerprintError(errMsgId, errString.toString());
+            else
+                 handleFingerprintError(errMsgId, "unknown error");
         }
 
         @Override
