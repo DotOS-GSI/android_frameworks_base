@@ -24,6 +24,7 @@
 #include <android/hardware/power/Mode.h>
 #include <android/system/suspend/1.0/ISystemSuspend.h>
 #include <android/system/suspend/ISuspendControlService.h>
+#include <vendor/samsung/hardware/miscpower/2.0/ISehMiscPower.h>
 #include <nativehelper/JNIHelp.h>
 #include <vendor/lineage/power/1.0/ILineagePower.h>
 #include <vendor/lineage/power/IPower.h>
@@ -69,6 +70,7 @@ using LineageBoostAidl = vendor::lineage::power::Boost;
 using LineageFeatureV1_0 = vendor::lineage::power::V1_0::LineageFeature;
 using LineageFeatureAidl = vendor::lineage::power::Feature;
 using LineagePowerHint1_0 = vendor::lineage::power::V1_0::LineagePowerHint;
+using ISehMiscPower = vendor::samsung::hardware::miscpower::V2_0::ISehMiscPower;
 
 namespace android {
 
@@ -86,6 +88,8 @@ static sp<IPowerV1_1> gPowerHalHidlV1_1_ = nullptr;
 static sp<IPowerAidl> gPowerHalAidl_ = nullptr;
 static sp<ILineagePowerV1_0> gLineagePowerHalV1_0_ = nullptr;
 static sp<ILineagePowerAidl> gLineagePowerHalAidl_ = nullptr;
+static sp<ISehMiscPower> gSehMiscPower = nullptr;
+static bool gPowerHalExists = true;
 static std::mutex gPowerHalMutex;
 static std::mutex gLineagePowerHalMutex;
 
@@ -131,6 +135,10 @@ static HalVersion connectPowerHalLocked() {
         } else {
             gPowerHalAidlExists = false;
         }
+    }
+    if (gPowerHalExists && gPowerHalHidlV1_0_ == nullptr) {
+        gSehMiscPower = ISehMiscPower::getService();
+        gPowerHalHidlV1_0_ = IPowerV1_0::getService("miscpower");
     }
     if (gPowerHalHidlExists && gPowerHalHidlV1_0_ == nullptr) {
         gPowerHalHidlV1_0_ = IPowerV1_0::getService();
@@ -188,6 +196,12 @@ static HalVersion connectLineagePowerHalLocked() {
         return HalVersion::HIDL_1_0;
     }
     return HalVersion::NONE;
+}
+
+sp<ISehMiscPower> getSehMiscPower() {
+    std::lock_guard<std::mutex> lock(gPowerHalMutex);
+    connectPowerHalLocked();
+    return gSehMiscPower;
 }
 
 // Retrieve a copy of PowerHAL HIDL V1_0
@@ -557,6 +571,14 @@ static void nativeSetInteractive(JNIEnv* /* env */, jclass /* clazz */, jboolean
         default: {
             ALOGE("Unknown power HAL state");
             return;
+        }
+    }
+    sp<ISehMiscPower> sehMiscPower = getSehMiscPower();
+    if(sehMiscPower != nullptr) {
+        android::base::Timer t;
+        Return<void> ret = sehMiscPower->setInteractiveAsync(enable, 0);
+        if(!ret.isOk()) {
+            ALOGE("set interactive async() failed: seh misc setInteractiveAsync");
         }
     }
 }
