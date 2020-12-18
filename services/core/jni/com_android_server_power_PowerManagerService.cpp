@@ -89,7 +89,6 @@ static sp<IPowerAidl> gPowerHalAidl_ = nullptr;
 static sp<ILineagePowerV1_0> gLineagePowerHalV1_0_ = nullptr;
 static sp<ILineagePowerAidl> gLineagePowerHalAidl_ = nullptr;
 static sp<ISehMiscPower> gSehMiscPower = nullptr;
-static bool gPowerHalExists = true;
 static std::mutex gPowerHalMutex;
 static std::mutex gLineagePowerHalMutex;
 
@@ -136,9 +135,11 @@ static HalVersion connectPowerHalLocked() {
             gPowerHalAidlExists = false;
         }
     }
-    if (gPowerHalExists && gPowerHalHidlV1_0_ == nullptr) {
+    if (gPowerHalHidlExists && gPowerHalHidlV1_0_ == nullptr) {
+	ALOGE("Trying to connect to Samsung Power HAL");
         gSehMiscPower = ISehMiscPower::getService();
         gPowerHalHidlV1_0_ = IPowerV1_0::getService("miscpower");
+	ALOGE("Got miscpower = %d, SehMiscPower = %d", gPowerHalHidlV1_0_ != nullptr ? 1 : 0, gSehMiscPower ? 1 : 0);
     }
     if (gPowerHalHidlExists && gPowerHalHidlV1_0_ == nullptr) {
         gPowerHalHidlV1_0_ = IPowerV1_0::getService();
@@ -545,7 +546,17 @@ static void nativeReleaseSuspendBlocker(JNIEnv *env, jclass /* clazz */, jstring
 
 static void nativeSetInteractive(JNIEnv* /* env */, jclass /* clazz */, jboolean enable) {
     std::unique_lock<std::mutex> lock(gPowerHalMutex);
-    switch (connectPowerHalLocked()) {
+
+    auto powerHalType = connectPowerHalLocked();
+    if(gSehMiscPower != nullptr) {
+        android::base::Timer t;
+        Return<void> ret = gSehMiscPower->setInteractiveAsync(enable, 0);
+        if(!ret.isOk()) {
+            ALOGE("set interactive async() failed: seh misc setInteractiveAsync");
+        }
+    }
+
+    switch (powerHalType) {
         case HalVersion::NONE:
             return;
         case HalVersion::HIDL_1_0:
@@ -571,14 +582,6 @@ static void nativeSetInteractive(JNIEnv* /* env */, jclass /* clazz */, jboolean
         default: {
             ALOGE("Unknown power HAL state");
             return;
-        }
-    }
-    sp<ISehMiscPower> sehMiscPower = getSehMiscPower();
-    if(sehMiscPower != nullptr) {
-        android::base::Timer t;
-        Return<void> ret = sehMiscPower->setInteractiveAsync(enable, 0);
-        if(!ret.isOk()) {
-            ALOGE("set interactive async() failed: seh misc setInteractiveAsync");
         }
     }
 }
