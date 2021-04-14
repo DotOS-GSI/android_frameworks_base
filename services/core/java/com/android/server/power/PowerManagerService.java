@@ -240,8 +240,7 @@ public final class PowerManagerService extends SystemService
     private static final int HALT_MODE_REBOOT = 1;
     private static final int HALT_MODE_REBOOT_SAFE_MODE = 2;
 
-    // Add button light timeout
-    private static final int BUTTON_ON_DURATION = 5 * 1000;
+    private static final int DEFAULT_BUTTON_ON_DURATION = 5 * 1000;
 
     private final Context mContext;
     private final ServiceThread mHandlerThread;
@@ -2345,14 +2344,6 @@ public final class PowerManagerService extends SystemService
                     nextTimeout = mLastUserActivityTime
                             + screenOffTimeout - screenDimDuration;
                     if (now < nextTimeout) {
-                        if (getWakefulnessLocked() == WAKEFULNESS_AWAKE) {
-                            if (now > mLastUserActivityTime + BUTTON_ON_DURATION) {
-                                mButtonsLight.setBrightness(PowerManager.BRIGHTNESS_OFF_FLOAT);
-                            } else {
-                                mButtonsLight.setBrightness(mScreenBrightnessSettingDefault);
-                                nextTimeout = now + BUTTON_ON_DURATION;
-                            }
-                        }
                         mUserActivitySummary = USER_ACTIVITY_SCREEN_BRIGHT;
                         if (getWakefulnessLocked() == WAKEFULNESS_AWAKE) {
                             if (mButtonsLight != null) {
@@ -2402,7 +2393,10 @@ public final class PowerManagerService extends SystemService
                         if (now < nextTimeout) {
                             mUserActivitySummary = USER_ACTIVITY_SCREEN_DIM;
                             if (getWakefulnessLocked() == WAKEFULNESS_AWAKE) {
-                                mButtonsLight.setBrightness(PowerManager.BRIGHTNESS_OFF_FLOAT);
+                                if (mButtonsLight != null) {
+                                    mButtonsLight.setBrightness(PowerManager.BRIGHTNESS_OFF_FLOAT);
+                                    mButtonOn = false;
+                                }
                             }
                         }
                     }
