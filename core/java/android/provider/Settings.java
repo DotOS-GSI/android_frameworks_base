@@ -4036,6 +4036,13 @@ public final class Settings {
         public static final String ADAPTIVE_SLEEP = "adaptive_sleep";
 
         /**
+         * Indicates whether we should only show the app lock view when the device is woken up
+         * Or always.
+         * @hide
+         */
+        public static final String APP_LOCK_SHOW_ONLY_ON_WAKE = "app_lock_show_only_on_wake";
+
+        /**
          * Control whether the process CPU usage meter should be shown.
          *
          * @deprecated This functionality is no longer available as of
@@ -5170,12 +5177,6 @@ public final class Settings {
         public static final String QS_TILE_TITLE_VISIBILITY = "qs_tile_title_visibility";
 
         /**
-         * Three Finger Gesture from Oppo
-         * @hide
-         */
-        public static final String THREE_FINGER_GESTURE = "three_finger_gesture";
-
-        /**
          * FOD night light
          * @hide
          */
@@ -5252,6 +5253,12 @@ public final class Settings {
          * @hide
          */
         public static final String DOT_BUCKET_OVERLAY = "dot_bucket_overlay";
+
+         /**
+         * Swipe to screenshot
+         * @hide
+         */
+        public static final String SWIPE_TO_SCREENSHOT = "swipe_to_screenshot";
 
         /**
          * Whether to enable PULSE Edge lights
@@ -5628,6 +5635,7 @@ public final class Settings {
             PRIVATE_SETTINGS.add(INCREASING_RING_START_VOLUME);
             PRIVATE_SETTINGS.add(INCREASING_RING_RAMP_UP_TIME);
             PRIVATE_SETTINGS.add(INCALL_FEEDBACK_VIBRATE);
+            PRIVATE_SETTINGS.add(SWIPE_TO_SCREENSHOT);
         }
 
         /**
@@ -9640,6 +9648,46 @@ public final class Settings {
          * @hide
          */
         public static final String GESTURE_NAVBAR_LENGTH = "gesture_navbar_length";
+
+        /**
+         * Monet base accent.
+         * Do not override.
+         * @hide
+         */
+        public static final String MONET_BASE_ACCENT = "monet_base_accent";
+
+        /**
+         * Monet Theme Engine Switch.
+         * 1 - Enabled (Default)
+         * 0 - Disabled 
+         * @hide
+         */
+        public static final String MONET_ENGINE = "monet_engine";
+
+        /**
+         * Monet Theme Engine
+         * Set amount of colors to be generated
+         * from wallpaper.
+         * Default = 16 (best one yet)
+         * Lowering the amount of colors will decrease the accuracy (FASTER);
+         * Increasing the amount of colors will increase the accuracy (SLOWER);
+         * @hide
+         */
+        public static final String MONET_COLOR_GEN = "monet_color_gen";
+
+        /**
+         * Monet Theme Engine
+         * Set palette type
+         * 0 - Vibrant (default)
+         * 1 - Light Vibrant
+         * 2 - Dark Vibrant
+         * 3 - Dominant
+         * 4 - Muted
+         * 5 - Light Muted
+         * 6 - Dark Muted
+         * @hide
+         */
+        public static final String MONET_PALETTE = "monet_palette";
 
         /**
          * Current provider of proximity-based sharing services.
@@ -15698,6 +15746,30 @@ public final class Settings {
         @SdkConstant(SdkConstant.SdkConstantType.ACTIVITY_INTENT_ACTION)
         public static final String ACTION_VOLUME =
                 "android.settings.panel.action.VOLUME";
+
+        /**
+         * Activity Action: Show a settings dialog containing controls for Mobile Data.
+         * <p>
+         * Input: Nothing.
+         * <p>
+         * Output: Nothing.
+         * @hide
+         */
+        @SdkConstant(SdkConstant.SdkConstantType.ACTIVITY_INTENT_ACTION)
+        public static final String ACTION_MOBILE_DATA =
+                "android.settings.panel.action.MOBILE_DATA";
+
+        /**
+         * Activity Action: Show a settings dialog containing controls for Bluetooth.
+         * <p>
+         * Input: Nothing.
+         * <p>
+         * Output: Nothing.
+         * @hide
+         */
+        @SdkConstant(SdkConstant.SdkConstantType.ACTIVITY_INTENT_ACTION)
+        public static final String ACTION_BLUETOOTH =
+                "android.settings.panel.action.BLUETOOTH";
     }
 
     /**

@@ -20,6 +20,7 @@ import android.annotation.IntDef;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.graphics.PixelFormat;
 import android.hardware.biometrics.BiometricAuthenticator;
 import android.hardware.biometrics.BiometricConstants;
@@ -299,6 +300,8 @@ public class AuthContainerView extends LinearLayout
         mBackgroundView = mInjector.getBackgroundView(mFrameLayout);
 
         addView(mFrameLayout);
+        mBiometricScrollView.setClipChildren(false);
+        mFrameLayout.setClipChildren(false);
 
         // TODO: De-dupe the logic with AuthCredentialPasswordView
         setOnKeyListener((v, keyCode, event) -> {
@@ -429,7 +432,6 @@ public class AuthContainerView extends LinearLayout
                         .translationY(0)
                         .setDuration(ANIMATION_DURATION_SHOW_MS)
                         .setInterpolator(mLinearOutSlowIn)
-                        .withLayer()
                         .start();
                 if (mCredentialView != null && mCredentialView.isAttachedToWindow()) {
                     mCredentialView.setY(mTranslationY);
@@ -465,8 +467,10 @@ public class AuthContainerView extends LinearLayout
     public void show(WindowManager wm, @Nullable Bundle savedState) {
         if (mBiometricView != null) {
             mBiometricView.restoreState(savedState);
-        }
-        wm.addView(this, getLayoutParams(mWindowToken));
+            wm.addView(this, getLayoutParams(mWindowToken, mBiometricView.getHasFod()));
+	} else {
+            wm.addView(this, getLayoutParams(mWindowToken, false));
+	}
     }
 
     @Override
@@ -568,7 +572,6 @@ public class AuthContainerView extends LinearLayout
                     .translationY(mTranslationY)
                     .setDuration(ANIMATION_DURATION_AWAY_MS)
                     .setInterpolator(mLinearOutSlowIn)
-                    .withLayer()
                     .start();
             if (mCredentialView != null && mCredentialView.isAttachedToWindow()) {
                 mCredentialView.animate()
@@ -627,7 +630,7 @@ public class AuthContainerView extends LinearLayout
      * @param windowToken token for the window
      * @return
      */
-    public static WindowManager.LayoutParams getLayoutParams(IBinder windowToken) {
+    public static WindowManager.LayoutParams getLayoutParams(IBinder windowToken, boolean hasFod) {
         final int windowFlags = WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
                 | WindowManager.LayoutParams.FLAG_SECURE;
         final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
@@ -640,6 +643,9 @@ public class AuthContainerView extends LinearLayout
         lp.setFitInsetsTypes(lp.getFitInsetsTypes() & ~WindowInsets.Type.ime());
         lp.setTitle("BiometricPrompt");
         lp.token = windowToken;
+        if (hasFod) {
+            lp.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+        }
         return lp;
     }
 }

@@ -92,7 +92,7 @@ public enum ScrimState {
     BOUNCER {
         @Override
         public void prepare(ScrimState previousState) {
-            mBehindAlpha = mDefaultScrimAlpha;
+            mBehindAlpha = mScrimBehindAlphaKeyguard;
             mFrontAlpha = 0f;
             mBubbleAlpha = 0f;
         }
@@ -106,9 +106,19 @@ public enum ScrimState {
         public void prepare(ScrimState previousState) {
             mBehindAlpha = 0;
             mBubbleAlpha = 0f;
-            mFrontAlpha = mDefaultScrimAlpha;
+            mFrontAlpha = mScrimBehindAlphaKeyguard;
         }
     },
+
+    SHADE_LOCKED {
+        @Override
+        public void prepare(ScrimState scrimState) {
+            mBehindAlpha = mDefaultScrimAlpha;
+            mBubbleAlpha = 0.0f;
+            mFrontAlpha = 0.0f;
+        }
+    },
+
 
     /**
      * Changing screen brightness from quick settings.

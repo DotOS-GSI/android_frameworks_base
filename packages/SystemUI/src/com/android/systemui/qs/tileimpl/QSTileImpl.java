@@ -32,6 +32,7 @@ import android.annotation.NonNull;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.MonetWannabe;
 import android.graphics.drawable.Drawable;
 import android.metrics.LogMaker;
 import android.os.Handler;
@@ -294,7 +295,7 @@ public abstract class QSTileImpl<TState extends State> implements QSTile, Lifecy
     }
 
     public void showDetail(boolean show) {
-        mHandler.obtainMessage(H.SHOW_DETAIL, show ? 1 : 0, 0).sendToTarget();
+        //mHandler.obtainMessage(H.SHOW_DETAIL, show ? 1 : 0, 0).sendToTarget();
     }
 
     public void refreshState() {
@@ -407,10 +408,10 @@ public abstract class QSTileImpl<TState extends State> implements QSTile, Lifecy
     }
 
     private void handleShowDetail(boolean show) {
-        mShowingDetail = show;
-        for (int i = 0; i < mCallbacks.size(); i++) {
-            mCallbacks.get(i).onShowDetail(show);
-        }
+        //mShowingDetail = show;
+        //for (int i = 0; i < mCallbacks.size(); i++) {
+        //    mCallbacks.get(i).onShowDetail(show);
+        //}
     }
 
     protected boolean isShowingDetail() {
@@ -513,10 +514,14 @@ public abstract class QSTileImpl<TState extends State> implements QSTile, Lifecy
             case Tile.STATE_INACTIVE:
                 return Utils.getColorAttrDefaultColor(context, android.R.attr.textColorSecondary);
             case Tile.STATE_ACTIVE:
-                if (setQsUseNewTint) {
-                    return Utils.getColorAttrDefaultColor(context, android.R.attr.colorAccent);
+                if (MonetWannabe.isMonetEnabled(context)) {
+                    return MonetWannabe.manipulateColor(Utils.getColorAttrDefaultColor(context, android.R.attr.colorAccent), 0.6f);
                 } else {
-                    return Utils.getColorAttrDefaultColor(context, android.R.attr.colorPrimary);
+                    if (setQsUseNewTint) {
+                        return Utils.getColorAttrDefaultColor(context, android.R.attr.colorAccent);
+                    } else {
+                        return Utils.getColorAttrDefaultColor(context, android.R.attr.colorPrimary);
+                    }
                 }
             default:
                 Log.e("QSTile", "Invalid state " + state);

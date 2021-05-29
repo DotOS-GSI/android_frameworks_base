@@ -3041,17 +3041,21 @@
        value above is 0x01010530, so the public-group of attrs below has
        the id value of 0x01010531.
        =============================================================== -->
-
   <public-group type="attr" first-id="0x01010617">
-    <!-- attribute definitions go here -->
+     <!-- @hide  -->
+     <public name="colorAccentBackground" />
+     <!-- @hide -->
+     <public name="colorAccentOverlay" />
   </public-group>
 
   <public-group type="drawable" first-id="0x010800b5">
     <!-- drawable definitions go here -->
   </public-group>
 
+     
   <public-group type="color" first-id="0x0106001d">
-    <!-- color definitions go here -->
+     <!-- @hide -->
+    <public name="accent_background_device_default" />
   </public-group>
 
   <public-group type="dimen" first-id="0x01050008">

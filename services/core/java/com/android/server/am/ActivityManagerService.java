@@ -1673,14 +1673,14 @@ public class ActivityManagerService extends IActivityManager.Stub
     private ParcelFileDescriptor[] mLifeMonitorFds;
 
     static final HostingRecord sNullHostingRecord = new HostingRecord(null);
-
-    final SwipeToScreenshotObserver mSwipeToScreenshotObserver;
-    private boolean mIsSwipeToScreenshotEnabled;
-
     /**
      * Used to notify activity lifecycle events.
      */
     @Nullable ContentCaptureManagerInternal mContentCaptureService;
+
+    // Swipe to screenshot
+    final SwipeToScreenshotObserver mSwipeToScreenshotObserver;
+    private boolean mIsSwipeToScrenshotEnabled;
 
     final class UiHandler extends Handler {
         public UiHandler() {
@@ -20393,14 +20393,14 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         public void registerObserver() {
             mContext.getContentResolver().registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.THREE_FINGER_GESTURE),
+                    Settings.System.getUriFor(Settings.System.SWIPE_TO_SCREENSHOT),
                     false, this, UserHandle.USER_ALL);
             update();
         }
 
         private void update() {
-            mIsSwipeToScreenshotEnabled = Settings.System.getIntForUser(mContext.getContentResolver(),
-                    Settings.System.THREE_FINGER_GESTURE, 0, UserHandle.USER_CURRENT) == 1;
+            mIsSwipeToScrenshotEnabled = Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.SWIPE_TO_SCREENSHOT, 0, UserHandle.USER_CURRENT) == 1;
         }
 
         public void onChange(boolean selfChange) {
@@ -20411,7 +20411,8 @@ public class ActivityManagerService extends IActivityManager.Stub
     @Override
     public boolean isSwipeToScreenshotGestureActive() {
         synchronized (this) {
-            return mIsSwipeToScreenshotEnabled;
+            return mIsSwipeToScrenshotEnabled && SystemProperties.getBoolean("sys.android.screenshot", false);
         }
     }
+
 }

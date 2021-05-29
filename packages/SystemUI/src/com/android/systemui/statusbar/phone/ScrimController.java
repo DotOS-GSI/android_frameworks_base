@@ -23,6 +23,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.IntDef;
 import android.app.AlarmManager;
+import android.content.res.MonetWannabe;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
@@ -54,6 +55,8 @@ import com.android.systemui.statusbar.policy.KeyguardStateController;
 import com.android.systemui.util.AlarmTimeout;
 import com.android.systemui.util.wakelock.DelayedWakeLock;
 import com.android.systemui.util.wakelock.WakeLock;
+
+import com.android.settingslib.Utils;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -108,7 +111,7 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, OnCo
     /**
      * Default alpha value for most scrims.
      */
-    protected static final float KEYGUARD_SCRIM_ALPHA = 0.2f;
+    protected static final float KEYGUARD_SCRIM_ALPHA = 0.15f;
     /**
      * Scrim opacity when the phone is about to wake-up.
      */
@@ -123,12 +126,12 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, OnCo
      * The default scrim under the shade and dialogs.
      * This should not be lower than 0.54, otherwise we won't pass GAR.
      */
-    public static final float BUSY_SCRIM_ALPHA = 0.85f;
+    public static final float BUSY_SCRIM_ALPHA = 1f;
 
     /**
      * Same as above, but when blur is supported.
      */
-    public static final float BLUR_SCRIM_ALPHA = 0.54f;
+    public static final float BLUR_SCRIM_ALPHA = 0.9f;
 
     static final int TAG_KEY_ANIM = R.id.scrim;
     private static final int TAG_START_ALPHA = R.id.scrim_alpha_start;
@@ -195,12 +198,18 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, OnCo
     private boolean mWakeLockHeld;
     private boolean mKeyguardOccluded;
 
+    private float mQsExpansion;
+
     @Inject
     public ScrimController(LightBarController lightBarController, DozeParameters dozeParameters,
             AlarmManager alarmManager, KeyguardStateController keyguardStateController,
             DelayedWakeLock.Builder delayedWakeLockBuilder, Handler handler,
             KeyguardUpdateMonitor keyguardUpdateMonitor, SysuiColorExtractor sysuiColorExtractor,
             DockManager dockManager, BlurUtils blurUtils) {
+
+        mInFrontAlpha = -1.0f;
+        mBehindAlpha = -1.0f;
+        mBubbleAlpha = -1.0f;
 
         mScrimStateListener = lightBarController::setScrimState;
         mDefaultScrimAlpha = blurUtils.supportsBlursOnWindows()
@@ -228,7 +237,8 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, OnCo
 
         mColorExtractor = sysuiColorExtractor;
         mColorExtractor.addOnColorsChangedListener(this);
-        mColors = mColorExtractor.getNeutralColors();
+        mColors = new ColorExtractor.GradientColors();
+        updateThemeColors();
         mNeedsDrawableColorUpdate = true;
     }
 
@@ -448,6 +458,18 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, OnCo
         }
     }
 
+    public void setQsExpansion(float fraction) {
+        if (!isNaN(fraction) && mQsExpansion != fraction) {
+            mQsExpansion = fraction;
+            Log.d("ScrimController", "set qs fraction" + mQsExpansion);
+            ScrimState scrimState = mState;
+            if ((scrimState == ScrimState.SHADE_LOCKED || scrimState == ScrimState.KEYGUARD || scrimState == ScrimState.PULSING || scrimState == ScrimState.BUBBLE_EXPANDED) && mExpansionAffectsAlpha) {
+                applyAndDispatchExpansion();
+            }
+        }
+    }
+
+
     private void setOrAdaptCurrentAnimation(View scrim) {
         float alpha = getCurrentScrimAlpha(scrim);
         if (isAnimating(scrim)) {
@@ -493,6 +515,12 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, OnCo
             }
             mBehindTint = ColorUtils.blendARGB(ScrimState.BOUNCER.getBehindTint(),
                     mState.getBehindTint(), interpolatedFract);
+            float f = mQsExpansion;
+            if (f > 0.0f) {
+                mBehindAlpha = MathUtils.lerp(mBehindAlpha, mDefaultScrimAlpha, f);
+                mBehindTint = ColorUtils.blendARGB(mBehindTint, ScrimState.SHADE_LOCKED.getBehindTint(), mQsExpansion);
+            }
+
         }
         if (isNaN(mBehindAlpha) || isNaN(mInFrontAlpha)) {
             throw new IllegalStateException("Scrim opacity is NaN for state: " + mState
@@ -943,10 +971,30 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, OnCo
 
     @Override
     public void onColorsChanged(ColorExtractor colorExtractor, int which) {
-        mColors = mColorExtractor.getNeutralColors();
-        mNeedsDrawableColorUpdate = true;
+        //mColors = mColorExtractor.getNeutralColors();
+        updateThemeColors();
         scheduleUpdate();
     }
+
+    private void updateThemeColors() {
+        ScrimView scrimView = mScrimBehind;
+        if (scrimView == null) return;
+        int mainColor;
+        int secondaryColor;
+        if (MonetWannabe.isMonetEnabled(mScrimBehind.getContext())) {
+            mainColor = Utils.getColorAttrDefaultColor(scrimView.getContext(), android.R.attr.colorAccentOverlay);
+            secondaryColor = Utils.getColorAttrDefaultColor(mScrimBehind.getContext(), android.R.attr.colorAccent);
+        } else {
+            mainColor = Utils.getColorAttr(scrimView.getContext(), android.R.attr.textColorPrimaryInverse).getDefaultColor();
+            secondaryColor = Utils.getColorAccent(mScrimBehind.getContext()).getDefaultColor();
+        }
+        mColors.setMainColor(mainColor);
+        mColors.setSecondaryColor(secondaryColor);
+        ColorExtractor.GradientColors gradientColors = mColors;
+        gradientColors.setSupportsDarkText(ColorUtils.calculateContrast(gradientColors.getMainColor(), -1) > 4.5d);
+        mNeedsDrawableColorUpdate = true;
+    }
+
 
     @Override
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
